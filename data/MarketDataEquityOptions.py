@@ -1,29 +1,14 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jun 19 22:54:27 2018
+import numpy as np
+import pandas as pd
 
-@author: Qifei
-"""
+from data.MarketData import MarketData
 
-import sched, time
-import urllib.request, urllib.error, urllib.parse
-from random import randrange
-from datetime import datetime
-from datetime import date
-from datetime import timedelta
-import csv
-import json
-import os
-import configparser
 
-class Data(object):
-    '''
-    classdocs
-    '''
-    
-    def __init__(self, ticker):
-        self.ticker = ticker
-        
+class MarketdataEquityOptions(MarketData):
+
+    def __init__(self):
+        super().__init__()
+
     def read_config(self):
         """Read configuration from file config.ini
         :return: tickers as list
@@ -39,7 +24,7 @@ class Data(object):
                 return tickers_list
         except (configparser.NoSectionError, configparser.NoOptionError):
             return None
-        
+
     def create_url(self, ticker, expiration_date=None):
         """Create download url for ticker and [optionally] expiration date
         :param ticker:
@@ -48,11 +33,12 @@ class Data(object):
         """
         srv = randrange(1, 3, 1)  # select randomly to use query1 or query2
         if expiration_date:
-            link = 'https://query{}.finance.yahoo.com/v7/finance/options/{}?date={}'.format(srv, ticker, expiration_date)
+            link = 'https://query{}.finance.yahoo.com/v7/finance/options/{}?date={}'.format(srv, ticker,
+                                                                                            expiration_date)
         else:
             link = 'https://query{}.finance.yahoo.com/v7/finance/options/{}'.format(srv, ticker)
         return link
-    
+
     def get_json_data(self, ticker, expiration_date=None, return_value='all'):
         """Request data as json from finance.yahoo.com
         :param ticker:
@@ -83,22 +69,23 @@ class Data(object):
                 return chain_json
         else:
             return []
-        
-    def getData (self, ticker):
+
+    def getData(self, ticker):
         # change header_template to include the fields you want from fieldnames
         # i.e. the full list of possible fields
-    
-        header_template = ('Date', 'Expire Date', 'Option Type', 'Strike', 'Contract Name', 'Last', 'Bid', 'Ask', 'Change',
-                           '%Change', 'Volume', 'Open Interest', 'Implied Volatility')
+
+        header_template = (
+        'Date', 'Expire Date', 'Option Type', 'Strike', 'Contract Name', 'Last', 'Bid', 'Ask', 'Change',
+        '%Change', 'Volume', 'Open Interest', 'Implied Volatility')
         all_fields = {'Implied Volatility': 'impliedVolatility', 'Last Trade Date': 'lastTradeDate',
                       'Contract Size': 'contractSize', 'Last': 'lastPrice', 'Contract Name': 'contractSymbol',
                       'In The Money': 'inTheMoney', 'Bid': 'bid', 'Ask': 'ask', 'Volume': 'volume',
                       'Currency': 'currency', 'Expire Date': 'expiration', '%Change': 'percentChange',
                       'Strike': 'strike', 'Open Interest': 'openInterest', 'Change': 'change', 'Date': 'todayDate',
                       'Option Type': 'optionType'}
-    
+
         csv.register_dialect('yahoo', delimiter=',', quoting=csv.QUOTE_NONE, lineterminator='\n')
-    
+
         # retrieve or create list of fieldnames
         file_name = '{}.csv'.format(ticker)
         if os.path.isfile(file_name):  # already there is file from previous download
@@ -113,7 +100,7 @@ class Data(object):
         else:
             wr_fieldnames = [all_fields[fldnm] for fldnm in header_template]  # create fieldnames from header_template
             found_file = False
-    
+
         # write to file
         if wr_fieldnames:
             with open(file_name, 'a') as f:
@@ -121,10 +108,10 @@ class Data(object):
                 # add headers if new file
                 if not found_file:
                     f.writelines('{}\n'.format(','.join(header_template)))
-                    
+
                 current_time = datetime.now()
                 expire_dates = self.get_json_data(ticker, return_value='expiration dates')
-    
+
                 # loop trough all expire dates
                 for exp_date in expire_dates:
                     ed = datetime.strftime(date(1970, 1, 1) + timedelta(seconds=int(exp_date)), '%d.%m.%Y')
@@ -142,28 +129,19 @@ class Data(object):
     def downloandAndSave():
         data = download()
         save(data)
-        
-    def downloadData(self):
+
+    def downloadData(self, ticker):
         s = sched.scheduler(time.time, time.sleep)
+
         def download(sc):
             print("Downloading...")
-            self.getData(self.ticker)
+            self.getData(ticker)
             print("Finished downloading")
             # do your stuff
             s.enter(5, 1, download, (sc,))
-    
+
         s.enter(2, 1, download, (s,))
         s.run()
-        
+
     def saveData():
         return ""
-
-
-
-
-
-
-
-
-
-
