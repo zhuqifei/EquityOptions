@@ -1,8 +1,11 @@
 from solver.Solver import Solver
 
+from numpy.core import empty, clip, zeros, exp, sqrt, ceil
+from scipy import sparse
+import scipy.sparse.linalg.dsolve as linsolve
+
 
 class BSSolver(Solver):
-
     """Finite-difference solver for the Black-Scholes PDE in its most basic form.
            The problem to solve is given by:
 
@@ -60,7 +63,7 @@ class BSSolver(Solver):
         self.isAmerican = isAmericanOpt
         self.intrinsicValue = self.u[0, :]
 
-    def build_sparse_explicit(s):
+    def build_sparse_explicit(self, s):
         """(internal) Set up the sparse matrix system for the explicit method."""
 
         A = sparse.lil_matrix((s.n, s.n))
@@ -78,7 +81,7 @@ class BSSolver(Solver):
 
         s.A = A.tocsr()
 
-    def build_sparse_implicit(s):
+    def build_sparse_implicit(self, s):
         """(internal) Set up the sparse matrix system for the implicit method."""
 
         C = sparse.lil_matrix((s.n, s.n))
@@ -100,7 +103,7 @@ class BSSolver(Solver):
         # Buffer to store right-hand side of the linear system Cu = v
         s.v = empty((n,))
 
-    def build_sparse_crank_nicolson(s):
+    def build_sparse_crank_nicolson(self, s):
         """(internal) Set up the sparse matrices for the Crank-Nicolson method. """
 
         A = sparse.lil_matrix((s.n, s.n))
@@ -124,9 +127,9 @@ class BSSolver(Solver):
         s.C = linsolve.splu(sparse.lil_matrix.tocsc(C))  # perform sparse LU decomposition
 
         # Buffer to store right-hand side of the linear system Cu = v
-        s.v = empty((n,))
+        s.v = empty((self.n,))
 
-    def time_step_explicit(s, i):
+    def time_step_explicit(self, s, i):
         """(internal) Solve the PDE for one time step using the explicit method."""
 
         # Perform the next time step
@@ -138,7 +141,7 @@ class BSSolver(Solver):
         s.u[i + 1, 0] += s.Fl[i] * 0.5 * s.dt * ((s.sigma * xdl) ** 2 - s.r * xdl)
         s.u[i + 1, s.n - 1] += s.Fu[i] * 0.5 * s.dt * ((s.sigma * xdu) ** 2 + s.r * xdu)
 
-    def time_step_implicit(s, i):
+    def time_step_implicit(self, s, i):
         """(internal) Solve the PDE for one time step using the implicit method."""
 
         s.v[:] = s.u[i, :]
@@ -152,7 +155,7 @@ class BSSolver(Solver):
         # Perform the next time step
         s.u[i + 1, :] = s.C.solve(s.v)
 
-    def time_step_crank_nicolson(s, i):
+    def time_step_crank_nicolson(self, s, i):
         """(internal) Solve the PDE for one time step using the Crank-Nicolson method."""
 
         # Perform explicit part of time step

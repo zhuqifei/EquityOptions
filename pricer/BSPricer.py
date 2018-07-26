@@ -17,7 +17,6 @@ import mpl_toolkits.mplot3d.axes3d as ax3d
 
 class BSPricer(Pricer):
 
-
     def price(self):
         return NotImplemented
 
@@ -38,7 +37,6 @@ class BSPricer(Pricer):
         bss = BSSolver(r, sigma, T, Bl, Bu, Fl, Fu, Fp, m, n, isAmerican)
         return X, bss.solve(method)
 
-
     def european_call(self, r, sigma, T, Bu, m, n, Bl=0.0, barrier=None, method=None, isAmerican=False):
         """Compute prices for a European-style call option."""
 
@@ -55,7 +53,6 @@ class BSPricer(Pricer):
 
         bss = BSSolver(r, sigma, T, Bl, Bu, Fl, Fu, Fp, m, n, isAmerican)
         return X, bss.solve(method)
-
 
     def plot_solution(self, T, X, u):
         # The surface plot
@@ -84,7 +81,9 @@ class BSPricer(Pricer):
 
         return fig_surface, fig_color, fig_zero
 
-    def parse_options(self):
+
+if __name__ == "__main__":
+    def parse_options():
         from optparse import OptionParser
 
         parser = OptionParser()
@@ -101,7 +100,7 @@ class BSPricer(Pricer):
         parser.add_option("-B", "--bound", dest="B", default="100.00",
                           help="upper bound on stock price [default: %default]")
 
-        parser.add_option("-m", "--time-steps", type = "int", dest="m", default="100",
+        parser.add_option("-m", "--time-steps", type="int", dest="m", default="100",
                           help="number of time steps [default: %default]")
         parser.add_option("-n", "--space-steps", dest="n", default="200",
                           help="number of steps in stock-price space [default: %default]")
@@ -125,63 +124,60 @@ class BSPricer(Pricer):
         return options
 
 
-    if __name__ == "__main__":
-        options = parse_options()
+    options = parse_options()
 
-        # Parameters
-        r = float(options.r)
-        sigma = float(options.sigma)
-        K = float(options.K)
-        T = float(options.T)
-        B = float(options.B)
-        dtt = float(options.dt)
-        isAmericanOption = True
+    # Parameters
+    r = float(options.r)
+    sigma = float(options.sigma)
+    K = float(options.K)
+    T = float(options.T)
+    B = float(options.B)
+    dtt = float(options.dt)
+    isAmericanOption = True
 
-        m = int(options.m)
-        n = int(options.n)
+    m = int(options.m)
+    n = int(options.n)
 
-        if options.dt is not None:
-            m = int(ceil(T / float(options.dt)))
-        if options.dx is not None:
-            n = int(ceil(B / float(options.dx))) - 1
+    if options.dt is not None:
+        m = int(ceil(T / float(options.dt)))
+    if options.dx is not None:
+        n = int(ceil(B / float(options.dx))) - 1
 
-        if options.is_put:
-            X, u = european_put(r, sigma, T, B, m, n,
-                                barrier=options.barrier,
-                                method=options.method, isAmerican=isAmericanOption)
-        else:
-            X, u = european_call(r, sigma, T, B, m, n,
-                                 barrier=options.barrier,
-                                 method=options.method, isAmerican=isAmericanOption)
+    if options.is_put:
+        X, u = BSPricer.european_put(r, sigma, T, B, m, n,
+                                     barrier=options.barrier, method=options.method, isAmerican=isAmericanOption)
+    else:
+        X, u = BSPricer().european_call(r, sigma, T, B, m, n,
+                             barrier=options.barrier, method=options.method, isAmerican=isAmericanOption)
 
-        # Print out results at time 0
-        print("Stock price x    Option price f(0,x)")
-        for i in range(0, n):
-            print("%10.4f         %10.4f " % (X[i], u[m, i]))
+    # Print out results at time 0
+    print("Stock price x    Option price f(0,x)")
+    for i in range(0, n):
+        print("%10.4f         %10.4f " % (X[i], u[m, i]))
 
-        # Generate plots if user requests
-        '''if options.plot or options.save_plot:
-    
-            golden_mean = (sqrt(5.0) - 1.0) / 2.0
-            pylab.rcParams.update( \
-                {'backend': 'ps',
-                 'ps.usedistiller': 'xpdf',
-                 'axes.labelsize': 10,
-                 'text.fontsize': 10,
-                 'xtick.labelsize': 8,
-                 'ytick.labelsize': 8,
-                 'figure.figsize': [7.0, golden_mean * 7.0],
-                 'text.usetex': True})
-    
-            fig_surface, fig_color, fig_zero = plot_solution(T, X, u)
-    
-            # Show figures
-            #if options.plot:
-            #    pylab.show()
-    
-            # Save figures to EPS formats
-            if options.save_plot:
-                fig_surface.savefig('bs-surface.eps')
-                #fig_color.savefig('bs-color.eps')
-                fig_zero.savefig('bs-zero.eps')
-            '''
+    # Generate plots if user requests
+    '''if options.plot or options.save_plot:
+
+        golden_mean = (sqrt(5.0) - 1.0) / 2.0
+        pylab.rcParams.update( \
+            {'backend': 'ps',
+             'ps.usedistiller': 'xpdf',
+             'axes.labelsize': 10,
+             'text.fontsize': 10,
+             'xtick.labelsize': 8,
+             'ytick.labelsize': 8,
+             'figure.figsize': [7.0, golden_mean * 7.0],
+             'text.usetex': True})
+
+        fig_surface, fig_color, fig_zero = plot_solution(T, X, u)
+
+        # Show figures
+        #if options.plot:
+        #    pylab.show()
+
+        # Save figures to EPS formats
+        if options.save_plot:
+            fig_surface.savefig('bs-surface.eps')
+            #fig_color.savefig('bs-color.eps')
+            fig_zero.savefig('bs-zero.eps')
+        '''
